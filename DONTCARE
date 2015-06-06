@@ -1,0 +1,70 @@
+SELECT	INTO MINE		
+		Pr.person_id,	
+		PRSNL_ACTIVE = IF (Pr.active_ind = 1 AND Pr.active_status_cd = 188)	
+			Yes ELSE "No" ENDIF,
+		PRSNL_EFFECTIVE_DT = IF (sysdate BETWEEN PR.beg_effective_dt_tm AND	
+			Pr.end_effective_dt_tm) "Yes" ELSE "No" ENDIF,
+		PN.name_title,	
+		PN.name_first,	
+		PN.name_middle,	
+		PN.name_last,	
+		PN.name_suffix,	
+		PN.name_degree,	
+		Pr.name_full_formatted,	
+		CMCD_ORG_DOC_NBR = build (char (34), PrA3.alias, char (34)),	
+		LIC_NBR = build (char (34), PrA1.alias, char (34)),	
+		NPI = build (char (34), PrA2.alias, char (34))	
+
+FROM	PRSNL_ALIAS PrA1,	
+		PRSNL_ALIAS PrA2,
+		PRSNL_ALIAS PrA3,
+		PRSNL Pr,
+		PERSON_NAME PN,
+		DUMMYT D1,
+		DUMMYT D2,
+		DUMMYT D3
+
+PLAN	Pr	
+ WHERE	Pr.physician_ind = 1	
+JOIN	PN	
+ WHERE	Pr.person_id = PN.person_id	
+  AND	PN.name_type_cd =      621783  ; Personnel	
+  AND	PN.active_ind = 1 	
+  AND	PN.active_status_cd = 188
+  AND	PN.beg_effective_dt_tm < sysdate
+  AND	PN.end_effective_dt_tm > sysdate
+JOIN	D3
+JOIN	PrA3
+ WHERE	Pr.person_id = PrA3.person_id
+  AND	PrA3.prsnl_alias_type_cd = 1088   ; Org Doc Nb
+  AND	PrA3.active_ind = 1
+  AND	PrA3.active_status_cd = 188
+  AND	PrA3.beg_effective_dt_tm < sysdate
+  AND	PrA3.end_effective_dt_tm > sysdate
+JOIN	D1
+JOIN	PrA1
+ WHERE	Pr.person_id = PrA1.person_id
+  AND	PrA1.prsnl_alias_type_cd = 1087   ; Lic Nbr
+  AND	PrA1.active_ind = 1
+  AND	PrA1.active_status_cd = 188	
+  AND	PrA1.beg_effective_dt_tm < sysdate	
+  AND	PrA1.end_effective_dt_tm > sysdate	
+JOIN	D2	
+JOIN	PrA2	
+ WHERE	Pr.person_id = PrA2.person_id	
+  AND	PrA2.prsnl_alias_type_cd = 21236463    ; NPI	
+  AND	PrA2.active_ind = 1	
+  AND	PrA2.active_status_cd = 188	
+  AND	PrA2.beg_effective_dt_tm < sysdate	
+  AND	PrA2.end_effective_dt_tm > sysdate	
+
+ORDER	Pr.person_id	
+
+WITH	TIME= 300,	
+		OUTERJOIN = D1,
+		OUTERJOIN = D2,
+		OUTERJOIN = D3,
+		DONTCARE = PrA1,
+		DONTCARE = PrA3
+
+
